@@ -1,0 +1,4 @@
+Addr=:8080
+ReadTimeout=10000
+WriteTimeout=10000
+MaxHeaderBytes=0

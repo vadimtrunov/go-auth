@@ -2,19 +2,24 @@ package main
 
 import (
 	"go-auth/actions"
+	"go-auth/configure"
 	"log"
 	"net/http"
-	"time"
 )
 
 func main() {
+	log.Println("Starting server. Reading configs...")
 	http.HandleFunc("/healthcheck", actions.Healthcheck)
-
-	s := &http.Server{
-		Addr:         ":8080",
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+	server, err := configure.HTTPServer("cnf/server.cnf")
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	log.Fatal(s.ListenAndServe())
+	log.Printf("Serve HTTP on %s", server.Addr)
+	err = server.ListenAndServe()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Server stopped")
 }

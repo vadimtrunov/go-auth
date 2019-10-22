@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// Healthcheck action for service
 func Healthcheck(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"status":  "Ok",
