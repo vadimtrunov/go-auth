@@ -10,9 +10,12 @@ import (
 func main() {
 	log.Println("Starting server. Reading configs...")
 	http.HandleFunc("/healthcheck", actions.Healthcheck)
-	server, err := configure.HTTPServer("cnf/server.cnf")
+
+	configPath := "cnf/server.cnf"
+	server, err := configure.HTTPServer(configPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Can't find CNF file. Use default configiration. To use your own configuration create file: '%s'/n", configPath)
+		server = &http.Server{Addr: ":8080"}
 	}
 
 	log.Printf("Serve HTTP on %s", server.Addr)
