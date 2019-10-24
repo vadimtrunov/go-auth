@@ -3,14 +3,13 @@ package main
 import (
 	"go-auth/actions"
 	"go-auth/configure"
+	"go-auth/store"
 	"log"
 	"net/http"
 )
 
 func main() {
-	log.Println("Starting server. Reading configs...")
-	http.HandleFunc("/healthcheck", actions.Healthcheck)
-
+	log.Print("Starting service. Reading configs...")
 	configPath := "cnf/server.cnf"
 	server, err := configure.HTTPServer(configPath)
 	if err != nil {
@@ -18,11 +17,22 @@ func main() {
 		server = &http.Server{Addr: ":8080"}
 	}
 
-	log.Printf("Serve HTTP on %s", server.Addr)
-	err = server.ListenAndServe()
-	if err != nil {
+	log.Print("Oppening persistent DB connection...")
+	if err := store.OpenDatabase(); err != nil {
 		log.Fatal(err)
 	}
 
+	log.Printf("Serve HTTP on %s", server.Addr)
+	routes()
+
+	if err = server.ListenAndServe(); err != nil {
+		log.Fatal(err)
+	}
+	store.CloseDatabase()
 	log.Println("Server stopped")
+}
+
+func routes() {
+	http.HandleFunc("/healthcheck", actions.Run(actions.Healthcheck, http.MethodGet))
+	http.HandleFunc("/registration", actions.Run(actions.Registration, http.MethodPost))
 }
