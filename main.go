@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"go-auth/actions"
 	"go-auth/configure"
 	"go-auth/store"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
 )
 
 func main() {
@@ -25,9 +29,20 @@ func main() {
 	log.Printf("Serve HTTP on %s", server.Addr)
 	routes()
 
-	if err = server.ListenAndServe(); err != nil {
-		log.Fatal(err)
-	}
+	go func() {
+		if err = server.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	<-c
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	server.Shutdown(ctx)
+
 	store.CloseDatabase()
 	log.Println("Server stopped")
 }
