@@ -9,7 +9,7 @@ import (
 )
 
 //HTTPAction is extended HttpHandler which returns http status of response and data
-type HTTPAction func(http.ResponseWriter, *http.Request) (int, interface{})
+type HTTPAction func(*http.Request) (int, interface{})
 
 //Run midleware for running actions action
 func Run(action HTTPAction, method string) func(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +19,7 @@ func Run(action HTTPAction, method string) func(w http.ResponseWriter, r *http.R
 			return
 		}
 
-		status, data := action(w, r)
+		status, data := action(r)
 
 		response, err := json.Marshal(data)
 		if err != nil {
@@ -33,20 +33,22 @@ func Run(action HTTPAction, method string) func(w http.ResponseWriter, r *http.R
 	}
 }
 
-// Healthcheck action for service
-func Healthcheck(w http.ResponseWriter, r *http.Request) (int, interface{}) {
+type healthCheckResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Code    int    `json:"code"`
+}
 
-	response := map[string]interface{}{
-		"status":  "Ok",
-		"message": "I'm OK",
-		"code":    200,
-	}
+// Healthcheck action for service
+func Healthcheck(r *http.Request) (int, interface{}) {
+
+	response := healthCheckResponse{"Ok", "I'm OK", http.StatusOK}
 
 	return http.StatusOK, response
 }
 
 //Registration action for service
-func Registration(w http.ResponseWriter, r *http.Request) (int, interface{}) {
+func Registration(r *http.Request) (int, interface{}) {
 	var user store.User
 
 	decoder := json.NewDecoder(r.Body)
