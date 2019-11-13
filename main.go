@@ -18,7 +18,7 @@ func main() {
 	}
 
 	log.Print("Oppening persistent DB connection...")
-	if err := store.OpenDatabase(); err != nil {
+	if err := store.OpenDatabase("data/store.db"); err != nil {
 		log.Fatal(err)
 	}
 
