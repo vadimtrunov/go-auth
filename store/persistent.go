@@ -2,7 +2,6 @@ package store
 
 import (
 	"encoding/json"
-	"log"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/boltdb/bolt"
@@ -16,25 +15,23 @@ var database *bolt.DB
 
 func init() {
 	govalidator.TagMap["unique"] = govalidator.Validator(func(email string) bool {
-		var user User
-		if found, err := Get(&user, email); found {
-			return false
-		} else if err != nil {
-			log.Println(err)
-			return false
-		}
-		return true
+		return !userExists(email)
 	})
 }
 
 //OpenDatabase opens connection to the persistent DB
-func OpenDatabase() error {
-	db, err := bolt.Open("data/store.db", 0600, nil)
+func OpenDatabase(store string) error {
+	db, err := bolt.Open(store, 0600, nil)
 	if err != nil {
 		return err
 	}
 	database = db
 
+	return CreateDefaultBacket()
+}
+
+//CreateDefaultBacket create default backet for correct DB work
+func CreateDefaultBacket() error {
 	return database.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(userBucket))
 		if err != nil {
@@ -49,6 +46,13 @@ func CloseDatabase() {
 	database.Close()
 }
 
+//DropDatabase cleare all data form database
+func DropDatabase() error {
+	return database.Update(func(tx *bolt.Tx) error {
+		return tx.DeleteBucket([]byte(userBucket))
+	})
+}
+
 //User is datastruct for user with credentials
 type User struct {
 	Email     string `json:"email" valid:"email,required,unique"`
@@ -56,72 +60,43 @@ type User struct {
 	Nickname  string `json:"nickname" valid:"stringlength(2|100)"`
 	FirstName string `json:"first_name" valid:"stringlength(2|100)"`
 	LastName  string `json:"last_name" valid:"stringlength(2|100)"`
+
+	validationErrors map[string]string
 }
 
-//Save is a method for create or update user into the store
-//You can't change email and password in this method. Use change ChangeCredentials for it
-func (user *User) Save() error {
-	return database.Update(func(tx *bolt.Tx) error {
+//Create is a method for create user into the store
+func (user *User) Create() (valid bool, validationErrors map[string]string, err error) {
+	if valid, err = govalidator.ValidateStruct(user); !valid {
+		validationErrors = govalidator.ErrorsByField(err)
+		return
+	}
+
+	cryptedPwd, err := bcrypt.GenerateFromPassword([]byte(user.Password), cryptingCost)
+	if err != nil {
+		return valid, nil, err
+	}
+	user.Password = string(cryptedPwd)
+
+	data, err := json.Marshal(user)
+	if err != nil {
+		return
+	}
+
+	err = database.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(userBucket))
-
-		var u User
-		exists, err := getUserByEmail(&u, user.Email, b)
-		if err != nil {
-			return err
-		}
-
-		if exists {
-			user.Password = u.Password
-			user.Email = u.Email
-		} else {
-			cryptedPwd, err := bcrypt.GenerateFromPassword([]byte(user.Password), cryptingCost)
-			if err != nil {
-				return err
-			}
-			user.Password = string(cryptedPwd)
-		}
-
-		data, err := json.Marshal(user)
-		if err != nil {
-			return err
-		}
 
 		return b.Put([]byte(user.Email), data)
 	})
+	return
 }
 
-//ChangeCredentials changing password and email of existing user
-func (user *User) ChangeCredentials() error {
-	//TODO implement method
-	return nil
-}
-
-//Get found user by email
-func Get(user *User, email string) (bool, error) {
-	var found bool
-
-	err := database.View(func(tx *bolt.Tx) error {
+func userExists(email string) bool {
+	var exist bool
+	database.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(userBucket))
-
-		exists, err := getUserByEmail(user, email, b)
-		if err != nil {
-			return err
-		}
-		found = exists
+		data := b.Get([]byte(email))
+		exist = data != nil
 		return nil
 	})
-
-	return found, err
-}
-
-func getUserByEmail(user *User, email string, b *bolt.Bucket) (bool, error) {
-	data := b.Get([]byte(email))
-	if data == nil {
-		return false, nil
-	}
-	if err := json.Unmarshal(data, user); err != nil {
-		return true, err
-	}
-
-	return true, nil
+	return exist
 }
