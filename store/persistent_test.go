@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -43,9 +44,47 @@ func (suite *RegistrationTestSuite) TestUserSave_WithValidParams() {
 
 	ok, _, _ := user.Create()
 	suite.True(ok)
+}
+
+func (suite *RegistrationTestSuite) TestUserSave_Twice() {
+	user := User{
+		Email:     "jhondoe@testmail.com",
+		Password:  "!strongPwd",
+		Nickname:  "JD",
+		FirstName: "Jhon",
+		LastName:  "Doe",
+	}
+
+	ok, _, _ := user.Create()
+	suite.True(ok)
 
 	ok, _, _ = user.Create()
 	suite.False(ok)
+}
+
+func (suite *RegistrationTestSuite) TestUserSave_CheckInDatabase() {
+	user := User{
+		Email:     "jhondoe@testmail.com",
+		Password:  "!strongPwd",
+		Nickname:  "JD",
+		FirstName: "Jhon",
+		LastName:  "Doe",
+	}
+
+	ok, _, _ := user.Create()
+	suite.True(ok)
+
+	found, savedUser := GetUserByEmail(user.Email)
+
+	suite.True(found)
+
+	suite.Equal(user.Email, savedUser.Email)
+	suite.Equal(user.Nickname, savedUser.Nickname)
+	suite.Equal(user.FirstName, savedUser.FirstName)
+	suite.Equal(user.LastName, savedUser.LastName)
+	suite.NotEqual(user.Password, savedUser.HashedPwd)
+
+	suite.Empty(savedUser.Password)
 }
 
 func (suite *RegistrationTestSuite) TestUserCreate_WithInvalidParams() {
@@ -63,4 +102,21 @@ func (suite *RegistrationTestSuite) TestUserCreate_WithInvalidParams() {
 	suite.Contains(validationErrors, "nickname")
 	suite.Contains(validationErrors, "first_name")
 	suite.Contains(validationErrors, "last_name")
+}
+
+func (suite *RegistrationTestSuite) TestUserCreate_WithTryToSetHashedPwd() {
+	user := User{
+		Email:     "jhondoe@testmail.com",
+		Password:  "!strongPwd",
+		HashedPwd: "cracked!!!",
+		Nickname:  "JD",
+		FirstName: "Jhon",
+		LastName:  "Doe",
+	}
+	ok, _, _ := user.Create()
+	suite.True(ok)
+	fmt.Println(user.HashedPwd)
+	suite.NotEqual("cracked!!!", user.HashedPwd)
+	suite.NotEqual("!strongPwd", user.HashedPwd)
+	suite.Empty(user.Password)
 }

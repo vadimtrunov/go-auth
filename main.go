@@ -35,4 +35,5 @@ func main() {
 func routes() {
 	http.HandleFunc("/healthcheck", actions.Run(actions.Healthcheck, http.MethodGet))
 	http.HandleFunc("/registration", actions.Run(actions.Registration, http.MethodPost))
+	http.HandleFunc("/login", actions.Run(actions.Login, http.MethodPost))
 }
