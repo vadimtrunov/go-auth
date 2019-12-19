@@ -3,7 +3,8 @@ package actions
 import (
 	"encoding/json"
 	"fmt"
-	"go-auth/store"
+	"github.com/vadimtrunov/go-auth/auth"
+	"github.com/vadimtrunov/go-auth/store"
 	"net/http"
 )
 
@@ -70,6 +71,25 @@ func Registration(r *http.Request) (int, interface{}) {
 	}
 
 	return http.StatusCreated, nil
+}
+
+//Login uthorize user and returns user data
+func Login(r *http.Request) (int, interface{}) {
+	var creds auth.Credentials
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&creds); err != nil {
+		return http.StatusBadRequest, nil
+	}
+
+	if valid, errors := creds.Create(); !valid {
+		return http.StatusUnprocessableEntity, errors
+	}
+	token, err := creds.Authorize()
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, token
 }
 
 func internalError(w http.ResponseWriter, msg string) {
