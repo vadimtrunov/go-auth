@@ -1,7 +1,7 @@
 package session
 
 import (
-	"go-auth/store"
+	"github.com/vadimtrunov/go-auth/store"
 	"sync"
 	"time"
 )
