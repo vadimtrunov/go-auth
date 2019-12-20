@@ -3,8 +3,8 @@ package actions
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/vadimtrunov/go-auth/auth"
-	"github.com/vadimtrunov/go-auth/store"
+	"go-auth/src/auth"
+	"go-auth/src/store"
 	"net/http"
 )
 

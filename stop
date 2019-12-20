@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+source config/config.sh
+
+docker-compose -f ${FILE} stop

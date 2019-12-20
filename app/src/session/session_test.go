@@ -2,7 +2,7 @@ package session
 
 import (
 	"fmt"
-	"go-auth/store"
+	"go-auth/src/store"
 	"sync"
 	"testing"
 	"time"

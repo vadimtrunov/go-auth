@@ -1,6 +1,6 @@
-module github.com/vadimtrunov/go-auth
+module go-auth
 
-go 1.12
+go 1.13
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
