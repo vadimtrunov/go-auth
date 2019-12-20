@@ -1,0 +1,12 @@
+version: '2'
+services:
+  go_auth_app:
+    container_name: go-auth-local
+    build:
+      context: ../
+      dockerfile: ./config/go/local/Dockerfile
+    image: go-auth-app:local
+    env_file:
+      - ./go/local/.env
+    ports:
+      - '22032:8080'
