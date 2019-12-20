@@ -5,5 +5,5 @@ WORKDIR /app
 ADD ./app /app
 RUN ls -al
 RUN apk update; apk add git;
-RUN go mod vendor && cd src/ && go build -o /app/bin .
+RUN cd src/ && go mod vendor && go build -o /app/bin .
 CMD ["/app/bin"]

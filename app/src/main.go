@@ -1,9 +1,9 @@
 package main
 
 import (
-	"go-auth/src/actions"
-	"go-auth/src/configure"
-	"go-auth/src/store"
+	"go-auth/actions"
+	"go-auth/configure"
+	"go-auth/store"
 	"log"
 	"net/http"
 )

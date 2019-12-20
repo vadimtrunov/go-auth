@@ -2,8 +2,8 @@ package auth
 
 import (
 	"errors"
-	"go-auth/src/session"
-	"go-auth/src/store"
+	"go-auth/session"
+	"go-auth/store"
 	"log"
 	"time"
 
