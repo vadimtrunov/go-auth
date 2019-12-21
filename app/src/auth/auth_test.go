@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"go-auth/store"
+	"go-auth/src/store"
 	"testing"
 
 	"github.com/dgrijalva/jwt-go"
